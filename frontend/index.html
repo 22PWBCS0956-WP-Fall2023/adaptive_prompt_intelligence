@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Buddy - Adaptive Chatbot</title>
+    <style>
+        /* --- Reset & Body --- */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0f172a;
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        /* --- Chat Container --- */
+        .chat-container {
+            width: 450px;
+            max-width: 90%;
+            background: #1e293b;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-container h2 {
+            text-align: center;
+            margin-bottom: 5px;
+            color: #22c55e;
+        }
+
+        .chat-container p {
+            text-align: center;
+            font-size: 13px;
+            color: #94a3b8;
+            margin-bottom: 15px;
+        }
+
+        /* --- Chat Box --- */
+        #chat-box {
+            flex: 1;
+            background: #020617;
+            padding: 10px;
+            border-radius: 8px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .message {
+            padding: 10px 15px;
+            border-radius: 12px;
+            max-width: 80%;
+            word-wrap: break-word;
+        }
+
+        .user {
+            background: #2563eb;
+            align-self: flex-end;
+        }
+
+        .bot {
+            background: #334155;
+            align-self: flex-start;
+        }
+
+        .type {
+            font-size: 11px;
+            color: #94a3b8;
+            margin-top: 3px;
+        }
+
+        /* --- Input Area --- */
+        .input-area {
+            display: flex;
+            gap: 10px;
+        }
+
+        .input-area input {
+            flex: 1;
+            padding: 10px;
+            border-radius: 8px;
+            border: none;
+            outline: none;
+            font-size: 14px;
+        }
+
+        .input-area button {
+            padding: 10px 18px;
+            border: none;
+            border-radius: 8px;
+            background: #22c55e;
+            font-weight: bold;
+            cursor: pointer;
+            color: #fff;
+            transition: background 0.2s;
+        }
+
+        .input-area button:hover {
+            background: #16a34a;
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <h2>Buddy 🤖</h2>
+        <p>Ask me anything, I’ll answer intelligently!</p>
+
+        <div id="chat-box"></div>
+
+        <div class="input-area">
+            <input type="text" id="user-input" placeholder="Type your question..." />
+            <button onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+
+    <script>
+        async function sendMessage() {
+            const input = document.getElementById("user-input");
+            const chatBox = document.getElementById("chat-box");
+            const message = input.value.trim();
+
+            if (!message) return;
+
+            // Show user message
+            const userMsg = document.createElement("div");
+            userMsg.classList.add("message", "user");
+            userMsg.innerHTML = `<b>You:</b> ${message}`;
+            chatBox.appendChild(userMsg);
+            chatBox.scrollTop = chatBox.scrollHeight;
+            input.value = "";
+
+            try {
+                // Call backend API
+                const response = await fetch("http://127.0.0.1:8000/chat", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ message: message })
+                });
+
+                const data = await response.json();
+
+                // Show bot response
+                const botMsg = document.createElement("div");
+                botMsg.classList.add("message", "bot");
+                botMsg.innerHTML = `<b>Buddy:</b> ${data.response}<div class="type">Type: ${data.question_type} | Intent: ${data.intent || 'N/A'} | Confidence: ${data.confidence || 'N/A'}</div>`;
+                chatBox.appendChild(botMsg);
+                chatBox.scrollTop = chatBox.scrollHeight;
+
+            } catch (err) {
+                const errMsg = document.createElement("div");
+                errMsg.classList.add("message", "bot");
+                errMsg.textContent = "Error connecting to backend";
+                chatBox.appendChild(errMsg);
+            }
+        }
+
+        // Optional: Press Enter to send
+        document.getElementById("user-input").addEventListener("keypress", function(e) {
+            if (e.key === "Enter") sendMessage();
+        });
+    </script>
+</body>
+</html>
